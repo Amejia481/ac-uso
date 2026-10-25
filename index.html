@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Uso de A/C</title>
+<meta name="theme-color" content="#1a1a19">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+:root {
+  color-scheme: light;
+  --surface-0: #f4f4f2;
+  --surface-1: #fcfcfb;
+  --border: #e2e1dc;
+  --grid: #ebeae6;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #7a7974;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --accent: #2a78d6;
+  --ok-bg: #e6f4ea;
+  --ok-ink: #1e6b34;
+  --warn-bg: #fdf0e1;
+  --warn-ink: #8a4b0b;
+  --err-bg: #fde8e7;
+  --err-ink: #9b1c1c;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-0: #121211;
+    --surface-1: #1a1a19;
+    --border: #2e2e2c;
+    --grid: #262624;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8f8e86;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --accent: #3987e5;
+    --ok-bg: #16291c;
+    --ok-ink: #8fd3a2;
+    --warn-bg: #2e2112;
+    --warn-ink: #f0b56e;
+    --err-bg: #2f1716;
+    --err-ink: #f2a3a1;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface-0: #121211; --surface-1: #1a1a19; --border: #2e2e2c; --grid: #262624;
+  --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #8f8e86;
+  --series-1: #3987e5; --series-2: #d95926; --accent: #3987e5;
+  --ok-bg: #16291c; --ok-ink: #8fd3a2; --warn-bg: #2e2112; --warn-ink: #f0b56e;
+  --err-bg: #2f1716; --err-ink: #f2a3a1;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font: 15px/1.45 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  padding: max(16px, env(safe-area-inset-top)) 16px 32px;
+}
+main { max-width: 560px; margin: 0 auto; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+h1 { font-size: 20px; margin: 0; }
+h2 { font-size: 15px; margin: 0 0 10px; color: var(--text-secondary); font-weight: 600; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+.row > * { flex: 1 1 140px; }
+label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+input, select, button { font: inherit; width: 100%; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-0); color: var(--text-primary); padding: 9px 10px; }
+button { background: var(--accent); color: #fff; border: none; font-weight: 600; cursor: pointer; }
+button.ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); width: auto; padding: 6px 10px; font-weight: 500; }
+.seg { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.seg button { background: transparent; color: var(--text-secondary); border-radius: 0; font-weight: 500; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.stat { background: var(--surface-0); border-radius: 8px; padding: 10px; }
+.stat span { display: block; font-size: 12px; color: var(--text-secondary); }
+.stat b { font-size: 22px; font-variant-numeric: tabular-nums; }
+.stat small { color: var(--text-muted); font-size: 12px; }
+.banner { border-radius: 8px; padding: 10px 12px; margin-top: 10px; font-size: 14px; }
+.banner.ok { background: var(--ok-bg); color: var(--ok-ink); }
+.banner.warn { background: var(--warn-bg); color: var(--warn-ink); }
+.banner.err { background: var(--err-bg); color: var(--err-ink); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 7px 4px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { font-size: 12px; color: var(--text-secondary); font-weight: 600; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.legend { display: flex; gap: 14px; font-size: 13px; color: var(--text-secondary); margin: 2px 0 8px; flex-wrap: wrap; }
+.muted { color: var(--text-muted); font-size: 12px; }
+.chart-wrap { position: relative; }
+svg { display: block; width: 100%; height: auto; overflow: visible; }
+.tip { position: absolute; pointer-events: none; background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; font-size: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.15); white-space: nowrap; display: none; z-index: 2; }
+details summary { cursor: pointer; color: var(--text-secondary); font-size: 14px; }
+.hidden { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Uso de A/C</h1>
+    <button class="ghost" id="btnAjustes" type="button">Ajustes</button>
+  </header>
+
+  <section class="card hidden" id="ajustes">
+    <h2>Conexión con Shelly Cloud</h2>
+    <p class="muted">La clave se guarda solo en este teléfono. Está en la app Shelly: Ajustes → Home → Access and permissions → Cloud key.</p>
+    <div class="row">
+      <div><label for="cfgServer">Servidor</label><input id="cfgServer" placeholder="shelly-284-eu.shelly.cloud" autocomplete="off"></div>
+      <div><label for="cfgKey">Clave (Cloud key)</label><input id="cfgKey" type="password" autocomplete="off"></div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <div><label for="cfgHoras">Horas incluidas por noche</label><input id="cfgHoras" type="number" min="0" step="1"></div>
+      <div><label for="cfgTarifa">USD por hora extra</label><input id="cfgTarifa" type="number" min="0" step="0.5"></div>
+    </div>
+    <div style="margin-top:10px"><button id="btnGuardar" type="button">Guardar</button></div>
+  </section>
+
+  <section class="card">
+    <div class="seg" role="group" aria-label="Apartamento" id="segApto"></div>
+    <div class="row" style="margin-top:10px">
+      <div><label for="fEntrada">Entrada</label><input id="fEntrada" type="date"></div>
+      <div><label for="fSalida">Salida</label><input id="fSalida" type="date"></div>
+    </div>
+    <div style="margin-top:10px"><button id="btnActualizar" type="button">Actualizar</button></div>
+    <div id="estado"></div>
+  </section>
+
+  <section class="card hidden" id="resumen">
+    <h2>Estadía</h2>
+    <div class="stats" id="stats"></div>
+    <div id="veredicto"></div>
+  </section>
+
+  <section class="card hidden" id="grafica">
+    <h2>Últimas 24 horas · minutos encendido por hora</h2>
+    <div class="legend" id="leyenda"></div>
+    <div class="chart-wrap" id="chartWrap"><div class="tip" id="tip"></div></div>
+    <p class="muted" id="solape"></p>
+    <details><summary>Ver como tabla</summary><div id="tabla24"></div></details>
+  </section>
+
+  <section class="card hidden" id="noches">
+    <h2>Por noche</h2>
+    <div id="tablaNoches"></div>
+    <p class="muted">Cada noche va de mediodía a mediodía. Horarios aproximados (± unos minutos).</p>
+  </section>
+</main>
+
+<script>
+"use strict";
+const APARTAMENTOS = {
+  gazcue: { nombre: "Gazcue", aires: [
+    { nombre: "Habitación", device: "441d647577ac", channel: 0 },
+    { nombre: "Sala", device: "441d647577ac", channel: 1 },
+  ]},
+  miraflores: { nombre: "Miraflores", aires: [
+    { nombre: "Habitación", device: "dcb4d9c5cc54", channel: 0 },
+    { nombre: "Sala", device: "dcb4d9c5cc54", channel: 1 },
+  ]},
+};
+const STANDBY_FALLBACK = 23.2;
+const MIN_CONSUMO_ON = 5;
+const SERIES = ["var(--series-1)", "var(--series-2)"];
+const $ = (id) => document.getElementById(id);
+
+// ---------- almacenamiento local (tolerante a fallos) ----------
+function leer(k, def) { try { const v = localStorage.getItem(k); return v === null ? def : JSON.parse(v); } catch (e) { return def; } }
+function guardar(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+const cfg = Object.assign({ server: "shelly-284-eu.shelly.cloud", key: "", horas: 8, tarifa: 1 }, leer("ac.cfg", {}));
+const estadia = Object.assign({ apto: "gazcue", entrada: "", salida: "" }, leer("ac.estadia", {}));
+
+// ---------- utilidades de fecha (hora local del teléfono = Santo Domingo) ----------
+const pad = (n) => String(n).padStart(2, "0");
+const fmtDia = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const fmtHora = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const fmtCorto = (d) => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}`;
+const parseDia = (s) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+const parseDT = (s) => { const [a, b] = s.split(" "); const [y, m, d] = a.split("-").map(Number); const [H, M, S] = b.split(":").map(Number); return new Date(y, m - 1, d, H, M, S || 0); };
+const sumarDias = (d, n) => { const r = new Date(d); r.setDate(r.getDate() + n); return r; };
+const HORA = 3600 * 1000;
+
+// ---------- API ----------
+async function descargar(aire, desde, hasta) {
+  // en tramos de 3 días para mantener la resolución por hora
+  let regs = [];
+  for (let d = new Date(desde); d <= hasta; d = sumarDias(d, 3)) {
+    const fin = new Date(Math.min(sumarDias(d, 2).getTime(), hasta.getTime()));
+    const qs = new URLSearchParams({
+      id: aire.device, channel: String(aire.channel), date_range: "custom",
+      date_from: `${fmtDia(d)} 00:00:00`, date_to: `${fmtDia(fin)} 23:59:59`, auth_key: cfg.key,
+    });
+    const url = `https://${cfg.server.replace(/^https?:\/\//, "").replace(/\/$/, "")}/v2/statistics/power-consumption/em-1p?${qs}`;
+    let r;
+    try { r = await fetch(url, { cache: "no-store" }); }
+    catch (e) { const err = new Error("red"); err.tipo = "red"; throw err; }
+    if (!r.ok) { const err = new Error(`HTTP ${r.status}`); err.tipo = r.status === 401 || r.status === 403 ? "auth" : "http"; throw err; }
+    const j = await r.json();
+    if (j.isok === false) { const err = new Error(JSON.stringify(j.errors || j)); err.tipo = "auth"; throw err; }
+    if (j.interval && j.interval !== "hour") { const err = new Error(`intervalo ${j.interval}`); err.tipo = "intervalo"; throw err; }
+    regs = regs.concat(j.history || []);
+  }
+  return regs;
+}
+
+// ---------- cálculo de horas (mismo método que reporte_ac.py) ----------
+function horasEncendido(registros) {
+  const validos = registros.filter((h) => !h.missing && h.consumption != null)
+    .sort((a, b) => (a.datetime < b.datetime ? -1 : 1));
+  const apagado = validos.filter((h) => h.consumption === 0 && (h.reversed || 0) > 15).map((h) => h.reversed).sort((a, b) => a - b);
+  const mediana = apagado.length ? apagado[Math.floor(apagado.length / 2)] : null;
+  const usaStandby = apagado.length >= 6;
+  const standby = usaStandby ? mediana : STANDBY_FALLBACK;
+  const cons = validos.map((h) => (h.consumption >= MIN_CONSUMO_ON ? h.consumption : 0));
+  return validos.map((h, i) => {
+    let frac = 0;
+    if (cons[i] > 0) {
+      if (usaStandby) frac = Math.max(0, Math.min(1, 1 - (h.reversed || 0) / standby));
+      else {
+        const prev = cons[i - 1] || 0, sig = cons[i + 1] || 0;
+        if (prev > 0 && sig > 0) frac = 1;
+        else { const v = sig || prev; frac = v ? Math.min(1, cons[i] / v) : 1; }
+      }
+    }
+    return { t: parseDT(h.datetime), frac, wh: h.consumption };
+  });
+}
+
+function porNoches(horas, entrada, nNoches) {
+  const ultimo = horas.length ? +horas[horas.length - 1].t : 0;
+  const inicio = new Date(entrada); inicio.setHours(12, 0, 0, 0);
+  const noches = Array.from({ length: nNoches }, () => ({ horas: 0, bloques: [] }));
+  for (const { t, frac } of horas) {
+    if (t < inicio || frac <= 0) continue;
+    const i = Math.min(Math.floor((t - inicio) / (24 * HORA)), nNoches - 1);
+    const n = noches[i]; n.horas += frac;
+    const b = n.bloques[n.bloques.length - 1];
+    if (b && t - b.finH === HORA) { b.finH = t; b.finF = frac; }
+    else n.bloques.push({ iniH: t, iniF: frac, finH: t, finF: frac });
+  }
+  const r5 = (m) => Math.round(m / 5) * 5 * 60 * 1000;
+  for (const n of noches) {
+    n.tramos = n.bloques.map((b) => {
+      const enCurso = +b.finH === ultimo && b.finF > 0;
+      if (+b.iniH === +b.finH && !enCurso) return `${fmtHora(b.iniH)} – ${fmtHora(new Date(+b.iniH + r5(b.iniF * 60)))}`;
+      if (enCurso) return `${fmtHora(new Date(+b.iniH + r5((1 - b.iniF) * 60)))} – en curso`;
+      return `${fmtHora(new Date(+b.iniH + r5((1 - b.iniF) * 60)))} – ${fmtHora(new Date(+b.finH + r5(b.finF * 60)))}`;
+    }).join(", ");
+  }
+  return noches;
+}
+
+// ---------- interfaz ----------
+function pintarSegmento() {
+  const seg = $("segApto"); seg.innerHTML = "";
+  for (const [k, a] of Object.entries(APARTAMENTOS)) {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = a.nombre; b.setAttribute("aria-pressed", String(estadia.apto === k));
+    b.onclick = () => { estadia.apto = k; guardar("ac.estadia", estadia); pintarSegmento(); };
+    seg.appendChild(b);
+  }
+}
+
+function mensaje(clase, texto) { $("estado").innerHTML = texto ? `<div class="banner ${clase}">${texto}</div>` : ""; }
+
+function iniciar() {
+  $("cfgServer").value = cfg.server; $("cfgKey").value = cfg.key;
+  $("cfgHoras").value = cfg.horas; $("cfgTarifa").value = cfg.tarifa;
+  const hoy = new Date();
+  $("fEntrada").value = estadia.entrada || fmtDia(sumarDias(hoy, -2));
+  $("fSalida").value = estadia.salida || fmtDia(sumarDias(hoy, 5));
+  pintarSegmento();
+  if (!cfg.key) $("ajustes").classList.remove("hidden");
+  $("btnAjustes").onclick = () => $("ajustes").classList.toggle("hidden");
+  $("btnGuardar").onclick = () => {
+    cfg.server = $("cfgServer").value.trim(); cfg.key = $("cfgKey").value.trim();
+    cfg.horas = Number($("cfgHoras").value) || 0; cfg.tarifa = Number($("cfgTarifa").value) || 0;
+    guardar("ac.cfg", cfg); $("ajustes").classList.add("hidden"); mensaje("ok", "Ajustes guardados.");
+  };
+  $("btnActualizar").onclick = actualizar;
+  if (cfg.key && estadia.entrada) actualizar();
+}
+
+async function actualizar() {
+  estadia.entrada = $("fEntrada").value; estadia.salida = $("fSalida").value;
+  guardar("ac.estadia", estadia);
+  if (!cfg.key) { $("ajustes").classList.remove("hidden"); mensaje("warn", "Falta la clave de Shelly Cloud en Ajustes."); return; }
+  if (!estadia.entrada || !estadia.salida || estadia.salida <= estadia.entrada) { mensaje("warn", "Revisa las fechas: la salida debe ser después de la entrada."); return; }
+
+  const entrada = parseDia(estadia.entrada), salida = parseDia(estadia.salida);
+  const nNoches = Math.round((salida - entrada) / (24 * HORA));
+  const ahora = new Date();
+  const hace24 = new Date(ahora - 24 * HORA);
+  const desde = new Date(Math.min(+entrada, +new Date(hace24.getFullYear(), hace24.getMonth(), hace24.getDate())));
+  const hastaDia = new Date(Math.min(+salida, +new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate())));
+  const apto = APARTAMENTOS[estadia.apto];
+
+  mensaje("", ""); $("btnActualizar").disabled = true; $("btnActualizar").textContent = "Descargando…";
+  try {
+    const aires = [];
+    for (const aire of apto.aires) {
+      const horas = horasEncendido(await descargar(aire, desde, hastaDia));
+      aires.push({ ...aire, horas, noches: porNoches(horas, entrada, nNoches) });
+    }
+    pintarResumen(aires, entrada, salida, nNoches, ahora);
+    pintarGrafica(aires, ahora);
+    pintarNoches(aires, entrada, nNoches);
+  } catch (e) {
+    const textos = {
+      red: "No se pudo conectar con Shelly Cloud. Si tienes internet, lo más probable es que el navegador bloquee la conexión directa (CORS); en ese caso esta app necesita un pequeño intermediario. Avísale a Claude.",
+      auth: "Shelly rechazó la clave. Si cambiaste la contraseña, copia la nueva Cloud key en Ajustes.",
+      intervalo: "Shelly devolvió datos agrupados por día en vez de por hora.",
+    };
+    mensaje("err", (textos[e.tipo] || "Error al descargar los datos.") + ` <span class="muted">(${e.message})</span>`);
+  } finally {
+    $("btnActualizar").disabled = false; $("btnActualizar").textContent = "Actualizar";
+  }
+}
+
+function pintarResumen(aires, entrada, salida, nNoches, ahora) {
+  const inicio = new Date(entrada); inicio.setHours(12, 0, 0, 0);
+  const transcurridas = ahora < inicio ? 0 : Math.min(nNoches, Math.floor((ahora - inicio) / (24 * HORA)) + 1);
+  const inclHoy = transcurridas * cfg.horas, inclTotal = nNoches * cfg.horas;
+  const usadas = aires.reduce((s, a) => s + a.noches.reduce((x, n) => x + n.horas, 0), 0);
+  const porAire = aires.map((a) => `<span class="swatch" style="background:${SERIES[aires.indexOf(a)]}"></span>${a.nombre} ${a.noches.reduce((x, n) => x + n.horas, 0).toFixed(1)} h`).join(" · ");
+  const extra = Math.max(0, usadas - inclTotal);
+  const cobro = extra >= 0.5 ? Math.round(extra) * cfg.tarifa : 0;
+  $("stats").innerHTML = `
+    <div class="stat"><span>Horas usadas</span><b>${usadas.toFixed(1)}</b></div>
+    <div class="stat"><span>Incluidas hasta ahora</span><b>${inclHoy}</b><small> de ${inclTotal}</small></div>
+    <div class="stat"><span>Noches</span><b>${transcurridas}</b><small> de ${nNoches}</small></div>
+    <div class="stat"><span>Extra al cierre</span><b>${cobro} USD</b></div>`;
+  const ritmo = inclHoy ? usadas / inclHoy : 0;
+  let clase = "ok", txt = `Van dentro de lo incluido (${Math.round(ritmo * 100)} % de las horas hasta hoy).`;
+  if (usadas > inclTotal) { clase = "err"; txt = `Superaron el total de la estadía por ${extra.toFixed(1)} h.`; }
+  else if (inclHoy && usadas > inclHoy) { clase = "warn"; txt = `Van por encima del ritmo: ${usadas.toFixed(1)} h usadas contra ${inclHoy} incluidas hasta hoy. Pueden compensar en las noches que faltan.`; }
+  $("veredicto").innerHTML = `<div class="banner ${clase}">${txt}</div><p class="muted" style="margin:8px 0 0">${porAire}</p>`;
+  $("resumen").classList.remove("hidden");
+}
+
+function pintarGrafica(aires, ahora) {
+  const fin = new Date(ahora); fin.setMinutes(0, 0, 0);
+  const horas = Array.from({ length: 24 }, (_, i) => new Date(+fin - (23 - i) * HORA));
+  const mapa = aires.map((a) => new Map(a.horas.map((h) => [+h.t, h])));
+  const W = 340, laneH = 52, gap = 18, top = 4, left = 0, bottom = 22;
+  const H = top + aires.length * laneH + (aires.length - 1) * gap + bottom;
+  const cw = W / 24, bw = Math.max(4, cw - 2);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Minutos encendido por hora en las últimas 24 horas">`;
+  const solapes = [];
+  horas.forEach((t, i) => {
+    const f = mapa.map((m) => (m.get(+t) || {}).frac || 0);
+    // solo es seguro que coincidieron si los minutos suman más de una hora
+    if (f.filter((x) => x > 0).length > 1 && f.reduce((x, y) => x + y, 0) > 1.05) solapes.push(i);
+  });
+  solapes.forEach((i) => { s += `<rect x="${left + i * cw}" y="${top}" width="${cw}" height="${H - top - bottom}" fill="var(--warn-bg)"/>`; });
+  aires.forEach((a, k) => {
+    const y0 = top + k * (laneH + gap), base = y0 + laneH;
+    s += `<line x1="0" x2="${W}" y1="${base}" y2="${base}" stroke="var(--grid)" stroke-width="1"/>`;
+    s += `<line x1="0" x2="${W}" y1="${y0}" y2="${y0}" stroke="var(--grid)" stroke-width="1" stroke-dasharray="2 3"/>`;
+    s += `<text x="2" y="${y0 + 11}" font-size="10" fill="var(--text-secondary)">${a.nombre} · 60 min</text>`;
+    horas.forEach((t, i) => {
+      const h = mapa[k].get(+t); const frac = h ? h.frac : 0;
+      const bh = frac * (laneH - 14); const x = left + i * cw + (cw - bw) / 2;
+      if (bh > 0) s += `<path d="M${x},${base} v${-(bh - 2)} q0,-2 2,-2 h${bw - 4} q2,0 2,2 v${bh - 2} z" fill="${SERIES[k]}"/>`;
+      s += `<rect class="hit" data-k="${k}" data-i="${i}" x="${left + i * cw}" y="${y0}" width="${cw}" height="${laneH}" fill="transparent"/>`;
+    });
+  });
+  [0, 6, 12, 18, 23].forEach((i) => { s += `<text x="${left + i * cw + cw / 2}" y="${H - 6}" font-size="10" text-anchor="middle" fill="var(--text-muted)">${pad(horas[i].getHours())}h</text>`; });
+  s += `</svg>`;
+  const wrap = $("chartWrap"); wrap.querySelectorAll("svg").forEach((n) => n.remove()); wrap.insertAdjacentHTML("beforeend", s);
+  $("leyenda").innerHTML = aires.map((a, k) => `<span><span class="swatch" style="background:${SERIES[k]}"></span>${a.nombre}</span>`).join("");
+  $("solape").textContent = solapes.length ? `Fondo resaltado: horas con los dos aires encendidos a la vez (${solapes.length}).` : "Ninguna hora con los dos aires encendidos a la vez.";
+  const tip = $("tip");
+  wrap.querySelectorAll(".hit").forEach((el) => {
+    const mostrar = (ev) => {
+      const k = +el.dataset.k, i = +el.dataset.i, t = horas[i], h = mapa[k].get(+t);
+      tip.innerHTML = `<b>${aires[k].nombre}</b> · ${fmtCorto(t)} ${pad(t.getHours())}:00<br>${h ? `${Math.round(h.frac * 60)} min encendido · ${Math.round(h.wh)} Wh` : "sin datos"}`;
+      const r = wrap.getBoundingClientRect(), x = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left;
+      tip.style.display = "block"; tip.style.left = Math.min(Math.max(0, x - 60), r.width - 150) + "px"; tip.style.top = "-6px";
+    };
+    el.addEventListener("pointerenter", mostrar); el.addEventListener("pointerdown", mostrar);
+    el.addEventListener("pointerleave", () => { tip.style.display = "none"; });
+  });
+  let tabla = `<table><thead><tr><th>Hora</th>${aires.map((a) => `<th class="n">${a.nombre}</th>`).join("")}</tr></thead><tbody>`;
+  horas.forEach((t) => { tabla += `<tr><td>${fmtCorto(t)} ${pad(t.getHours())}:00</td>${mapa.map((m) => { const h = m.get(+t); return `<td class="n">${h ? Math.round(h.frac * 60) + " min" : "—"}</td>`; }).join("")}</tr>`; });
+  $("tabla24").innerHTML = tabla + "</tbody></table>";
+  $("grafica").classList.remove("hidden");
+}
+
+function pintarNoches(aires, entrada, nNoches) {
+  let t = `<table><thead><tr><th>Noche</th>${aires.map((a, k) => `<th><span class="swatch" style="background:${SERIES[k]}"></span>${a.nombre}</th>`).join("")}<th class="n">Horas</th></tr></thead><tbody>`;
+  for (let i = 0; i < nNoches; i++) {
+    const d = sumarDias(entrada, i); let suma = 0;
+    const celdas = aires.map((a) => { const n = a.noches[i]; suma += n.horas; return `<td>${n.tramos || "—"}</td>`; }).join("");
+    const futura = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12) > new Date();
+    t += `<tr><td>${fmtCorto(d)} → ${fmtCorto(sumarDias(d, 1))}</td>${celdas}<td class="n">${futura ? "—" : suma.toFixed(1)}</td></tr>`;
+  }
+  $("tablaNoches").innerHTML = t + "</tbody></table>";
+  $("noches").classList.remove("hidden");
+}
+
+iniciar();
+</script>
+</body>
+</html>

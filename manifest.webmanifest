@@ -1,0 +1,12 @@
+{
+  "name": "Uso de A/C",
+  "short_name": "A/C",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#121211",
+  "theme_color": "#1a1a19",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
