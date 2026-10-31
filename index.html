@@ -193,10 +193,12 @@ async function descargar(aire, desde, hasta) {
   let regs = [];
   for (let d = new Date(desde); d <= hasta; d = sumarDias(d, 3)) {
     const fin = new Date(Math.min(sumarDias(d, 2).getTime(), hasta.getTime()));
-    const qs = new URLSearchParams({
+    // mismo formato que el enlace probado a mano: espacios como %20 y ":" sin codificar
+    const params = {
       id: aire.device, channel: String(aire.channel), date_range: "custom",
-      date_from: `${fmtDia(d)} 00:00:00`, date_to: `${fmtDia(fin)} 23:59:59`, auth_key: cfg.key,
-    });
+      date_from: `${fmtDia(d)} 00:00:00`, date_to: `${fmtDia(fin)} 23:59:59`, auth_key: cfg.key.trim(),
+    };
+    const qs = Object.entries(params).map(([k, v]) => `${k}=${encodeURIComponent(v).replace(/%3A/g, ":")}`).join("&");
     const url = `https://${cfg.server.replace(/^https?:\/\//, "").replace(/\/$/, "")}/v2/statistics/power-consumption/em-1p?${qs}`;
     let r;
     try { r = await fetch(url, { cache: "no-store" }); }
